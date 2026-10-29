@@ -1,0 +1,50 @@
+{
+  "entity": {
+    "sensor": {
+      "arrivals_tony": {
+        "default": "mdi:train"
+      },
+      "arrivals_tonj": {
+        "default": "mdi:train"
+      },
+      "arrivals": {
+        "default": "mdi:train"
+      },
+      "countdown_tony": {
+        "default": "mdi:timer-outline"
+      },
+      "countdown_tonj": {
+        "default": "mdi:timer-outline"
+      },
+      "countdown": {
+        "default": "mdi:timer-outline"
+      },
+      "feed_status": {
+        "default": "mdi:cloud-check-outline"
+      },
+      "service_alerts": {
+        "default": "mdi:alert-circle-outline"
+      },
+      "accessibility_alerts": {
+        "default": "mdi:elevator"
+      },
+      "planned_services": {
+        "default": "mdi:calendar-alert"
+      },
+      "line_status": {
+        "default": "mdi:train"
+      }
+    },
+    "binary_sensor": {
+      "reported_delay_tony": {
+        "default": "mdi:train-car-clock"
+      },
+      "reported_delay_tonj": {
+        "default": "mdi:train-car-clock"
+      },
+      "reported_delay": {
+        "default": "mdi:train-car-clock"
+      }
+    }
+  }
+}

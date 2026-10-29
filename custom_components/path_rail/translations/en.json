@@ -1,0 +1,113 @@
+{
+  "title": "PATH Rail",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up PATH Rail",
+        "description": "Select stations from the public RidePATH feed. No account or API key is required.",
+        "data": {
+          "stations": "Stations",
+          "stale_after": "Maximum source age (seconds)"
+        },
+        "data_description": {
+          "stations": "Choose stations to monitor. All use a single shared request every 30 seconds.",
+          "stale_after": "Hide predictions whose source timestamps are older than this limit (120\u20131800 seconds)."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot retrieve the PATH feed. Check internet access and try again.",
+      "invalid_feed": "The server returned an empty or unsupported feed. Try again later.",
+      "select_station": "Select at least one station.",
+      "station_missing": "None of the selected stations is present in the current feed."
+    },
+    "abort": {
+      "already_configured": "PATH Rail is already configured. Use Configure to change stations."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "PATH Rail options",
+        "description": "Changes reload the integration. Entities for removed stations become unavailable; you may remove their registry entries manually.",
+        "data": {
+          "stations": "Stations",
+          "stale_after": "Maximum source age (seconds)"
+        },
+        "data_description": {
+          "stations": "Choose stations to monitor. All use a single shared request every 30 seconds.",
+          "stale_after": "Hide predictions whose source timestamps are older than this limit (120\u20131800 seconds)."
+        }
+      }
+    },
+    "error": {
+      "select_station": "Select at least one station."
+    }
+  },
+  "exceptions": {
+    "update_failed": {
+      "message": "The PATH feed could not be updated. The service may be unavailable or have returned unsupported data."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "arrivals_tony": {
+        "name": "Toward New York next arrival"
+      },
+      "arrivals_tonj": {
+        "name": "Toward New Jersey next arrival"
+      },
+      "arrivals": {
+        "name": "{direction} next arrival"
+      },
+      "countdown_tony": {
+        "name": "Toward New York next arrival countdown"
+      },
+      "countdown_tonj": {
+        "name": "Toward New Jersey next arrival countdown"
+      },
+      "countdown": {
+        "name": "{direction} next arrival countdown"
+      },
+      "feed_status": {
+        "name": "PATH Rail feed status",
+        "state": {
+          "ok": "OK",
+          "stale": "Stale",
+          "missing_station": "Missing station",
+          "empty": "Empty",
+          "error": "Error"
+        }
+      },
+      "service_alerts": {
+        "name": "Alerts"
+      },
+      "accessibility_alerts": {
+        "name": "Elevator and escalator alerts"
+      },
+      "planned_services": {
+        "name": "Planned service changes"
+      },
+      "line_status": {
+        "name": "Service status",
+        "state": {
+          "delayed": "Delayed",
+          "suspended": "Suspended",
+          "good_service": "Good Service",
+          "not_scheduled": "Not Scheduled"
+        }
+      }
+    },
+    "binary_sensor": {
+      "reported_delay_tony": {
+        "name": "Toward New York reported delay"
+      },
+      "reported_delay_tonj": {
+        "name": "Toward New Jersey reported delay"
+      },
+      "reported_delay": {
+        "name": "{direction} reported delay"
+      }
+    }
+  }
+}
