@@ -24,3 +24,29 @@ STATIONS = {
     "33S": "33rd Street",
 }
 DIRECTIONS = {"ToNY": "toward New York", "ToNJ": "toward New Jersey"}
+
+# Normal terminal names and board directions, not an allowlist for live predictions.
+DESTINATIONS = {code: STATIONS[code] for code in ("33S", "WTC", "NWK", "HOB", "JSQ")}
+STATION_DESTINATIONS = {
+    "NWK": {"WTC": ("ToNY",)},
+    "HAR": {"NWK": ("ToNJ",), "WTC": ("ToNY",)},
+    "JSQ": {"NWK": ("ToNJ",), "WTC": ("ToNY",), "33S": ("ToNY",)},
+    "GRV": {"NWK": ("ToNJ",), "JSQ": ("ToNJ",), "WTC": ("ToNY",), "33S": ("ToNY",)},
+    "NEW": {"JSQ": ("ToNJ",), "HOB": ("ToNJ",), "WTC": ("ToNY",), "33S": ("ToNY",)},
+    "EXP": {"NWK": ("ToNJ",), "HOB": ("ToNJ",), "WTC": ("ToNY",)},
+    "HOB": {"WTC": ("ToNY",), "33S": ("ToNY",), "JSQ": ("ToNY", "ToNJ")},
+    "WTC": {"NWK": ("ToNJ",), "HOB": ("ToNJ",)},
+    **{
+        code: {"JSQ": ("ToNJ",), "HOB": ("ToNJ",), "33S": ("ToNY",)}
+        for code in ("CHR", "09S", "14S", "23S")
+    },
+    "33S": {"JSQ": ("ToNJ",), "HOB": ("ToNJ",)},
+}
+
+LINE_STATIONS = {
+    "red": ("NWK", "HAR", "JSQ", "GRV", "EXP", "WTC"),
+    "yellow": ("JSQ", "GRV", "NEW", "CHR", "09S", "14S", "23S", "33S"),
+    "green": ("HOB", "NEW", "EXP", "WTC"),
+    "blue": ("HOB", "CHR", "09S", "14S", "23S", "33S"),
+    "night-yellow": ("JSQ", "GRV", "NEW", "HOB", "CHR", "09S", "14S", "23S", "33S"),
+}

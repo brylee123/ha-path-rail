@@ -18,6 +18,14 @@ async def async_setup_entry(
         async_track_boards(
             coordinator,
             async_add_entities,
+            lambda key: [PathReportedDelay(coordinator, key, destination=True)],
+            destination=True,
+        )
+    )
+    entry.async_on_unload(
+        async_track_boards(
+            coordinator,
+            async_add_entities,
             lambda key: [PathReportedDelay(coordinator, key)],
         )
     )
@@ -26,8 +34,10 @@ async def async_setup_entry(
 class PathReportedDelay(PathBoardEntity, BinarySensorEntity):
     """On means at least one message literally says Delayed."""
 
-    def __init__(self, coordinator: PathCoordinator, key: tuple[str, str]) -> None:
-        super().__init__(coordinator, key, "reported_delay")
+    def __init__(
+        self, coordinator: PathCoordinator, key: tuple[str, str], *, destination: bool = False
+    ) -> None:
+        super().__init__(coordinator, key, "reported_delay", destination=destination)
 
     @property
     def is_on(self) -> bool | None:

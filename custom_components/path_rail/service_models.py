@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 
 from panynj_ridepath.announcements import AnnouncementFeed, SiteFeed
 
+from .const import LINE_STATIONS
 from .models import InvalidFeed
 from .site_calendar import CALENDAR_END, CALENDAR_START, US_HOLIDAYS
 
@@ -112,6 +113,12 @@ class Alert:
             "category": self.category,
             "stations": list(self.stations),
             "lines_mentioned": list(self.lines_mentioned),
+            "related_stations": sorted(
+                set(self.stations).union(
+                    *(LINE_STATIONS.get(line, ()) for line in self.lines_mentioned)
+                )
+            ),
+            "unscoped": not self.stations and not self.lines_mentioned,
         }
 
 

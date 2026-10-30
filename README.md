@@ -4,13 +4,15 @@
 
 # PATH Rail for Home Assistant
 
+**Development preview: 1.4.0b0.** This branch adds destination boards and the optional dashboard card. The current stable release does not yet contain these features.
+
 [![Release](https://img.shields.io/github/v/release/brylee123/ha-path-rail)](https://github.com/brylee123/ha-path-rail/releases)
 [![Validation](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml/badge.svg)](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.10.4%2B-blue)](https://www.home-assistant.io/)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Live PATH train arrivals, service announcements and inferred line status in Home Assistant.
+Destination-specific PATH train arrivals, service announcements and inferred line status in Home Assistant.
 Built for Home Assistant OS, including Raspberry Pi 4. No account, API key, MQTT broker
 or separate server is needed. This is an **unofficial community integration**, unaffiliated
 with the Port Authority of New York and New Jersey (PANYNJ).
@@ -30,7 +32,7 @@ as a custom integration repository; it is not listed in the HACS default catalog
 
 ## Features
 
-- Arrival boards for any of the 13 PATH stations, grouped by the directions the feed supplies.
+- Arrival boards for any of the 13 PATH stations, grouped by the actual destination reported by the feed.
 - Next-arrival text, numeric countdown when supported, and an explicit reported-delay sensor.
 - Service alerts, elevator/escalator notices and published planned service changes.
 - A service-status sensor for each of five PATH lines, with **Delayed**, **Suspended**,
@@ -73,8 +75,8 @@ as an integration. Manual installation below remains available.
 
 ### Manual installation on Home Assistant OS
 
-1. Make a backup and download `path_rail-1.3.2.zip` from the
-   [latest release](https://github.com/brylee123/ha-path-rail/releases/latest).
+1. Make a backup and download `path_rail-1.4.0b0.zip` from the development-preview download supplied with this branch. Stable releases remain on the
+   [releases page](https://github.com/brylee123/ha-path-rail/releases).
 2. Extract the ZIP on your computer. With the **Samba share** or **Studio Code Server**
    app, copy its `custom_components/path_rail` directory into `/config/custom_components/`.
 3. Confirm the final path is `/config/custom_components/path_rail/manifest.json`.
@@ -120,16 +122,39 @@ HTTP 429/503 Retry-After deadlines are respected independently for each resource
 
 ## Entities
 
-Each selected station has a service device. For every direction actually supplied by the feed:
+Each selected station has a service device. Arrival entities are grouped by **destination**,
+using upstream `target` codes. The normal terminal names are 33rd Street (`33S`),
+World Trade Center (`WTC`), Newark (`NWK`), Hoboken (`HOB`) and Journal Square (`JSQ`).
+Normal station connections determine the usual boards, not a whitelist: a reported
+unusual destination such as Grove Street is discovered automatically and is not discarded.
+The feed's destination is authoritative even if a rare service change differs from the normal network.
 
 | Entity | State and meaning |
 | --- | --- |
-| Next arrival | First upstream message, such as `3 min` or `Delayed`; full ordered board in the `arrivals` attribute |
-| Next arrival countdown | Feed seconds for that same first message, displayed as minutes by default; unknown if delayed, empty, invalid or unsupported text |
-| Reported delay | On if any board message explicitly says `Delayed`; off means no explicit delay text, not a guarantee of punctuality |
+| World Trade Center next arrival (example) | First matching upstream message, such as `3 min` or `Delayed`; all matching trains remain in the `arrivals` attribute |
+| World Trade Center next arrival countdown | Feed seconds for that same matching message; unknown for delayed/unsupported text or an empty destination board |
+| World Trade Center reported delay | On if any matching message explicitly says `Delayed`; off is not a guarantee of punctual service |
 
-`ToNY` and `ToNJ` are direction groups, not routes or platforms. One board can mix
-multiple destinations. Empty boards produce unknown; absent or stale boards become unavailable.
+The same three entities are created for each normal destination at the selected station.
+A healthy source with no matching prediction produces unknown, not Not Scheduled.
+Missing source boards or stale matching predictions produce unavailable. Freshness is
+checked per destination, so an old WTC prediction does not hide a fresh 33rd Street train.
+Known destinations use stable canonical names; unexpected destinations use their station
+name or reported headsign. Existing unexpected destinations stay registered if they
+temporarily disappear; after a reload they are rediscovered when reported again.
+
+Original **Toward New York/New Jersey** entities retain their unique IDs and existing
+registry settings. They are disabled by default for new entity registry entries. Existing
+dashboards can keep using them; disable them manually when migrating to destination cards.
+Arrival, countdown and delay entity IDs remain separate for direction and destination boards.
+
+The next-arrival sensor exposes `destination_code`, `destination`, `station_code`,
+`station_name`, `source_directions`, `arrivals`, `arrival_count`, `color`, `colors`
+and `fetched_at`. Each arrival keeps the original target, text, raw validated seconds,
+headsign, source timestamp and `line_color`, plus CSS-ready `colors` (for example
+`["#D93A30"]`). `color` is populated only when there is a single color; multi-color
+trains retain every color instead of inventing one. Different trains to WTC can have
+different colors. Colors come from the feed, not a fixed destination-to-color mapping.
 
 The integration also creates these entities regardless of the selected arrival stations:
 
@@ -151,37 +176,84 @@ The five lines are **Newark–WTC**, **Journal Square–33rd Street**, **Hoboken
 | Good Service | `good_service` |
 | Not Scheduled | `not_scheduled` |
 
-With the captured topology, Journal Square alone creates **15 entities**; all stations
-create **75**. Counts depend on boards actually returned. Newly observed directions are
-discovered automatically. Removing stations leaves any old registry entries unavailable;
-you may remove those entries manually. Selecting the station again reuses its unique IDs.
+Normal destination boards create 18 enabled entities with Journal Square selected,
+or 117 when all stations are selected (including the nine service/diagnostic entities).
+Additional unexpected destinations create additional entities when reported. Legacy
+direction entities are separate and may remain enabled on upgrades.
 
 ## Dashboard and automations
 
-Use a standard **Entities** card and select the arrival, countdown, delay and line-status
-sensors from the entity picker. Entity IDs depend on your entity registry and language.
+Standard Entities/Tile cards can display the destination sensors. Home Assistant has
+no generic sensor setting that automatically paints those cards using a `color` attribute.
+For colored train rows and the alert ticker, install the optional bundled card:
 
-For a Markdown card, replace `sensor.replace_with_your_arrival_entity` with your
-next-arrival sensor's actual ID. All messages remain in source order:
+1. Copy `custom_components/path_rail/www/path-rail-arrivals-card.js` to
+   `/config/www/path-rail-arrivals-card.js`. Create `/config/www` if needed. The preview
+   download also supplies the JavaScript as a separate file for this step.
+2. In **Settings → Dashboards → Resources** (enable Advanced mode in your profile if
+   needed), add `/local/path-rail-arrivals-card.js?v=1.4.0b0` as a **JavaScript module**.
+   If the `www` folder is newly created, restart Home Assistant; then refresh the browser.
+3. Add the **PATH arrival board** community card in the dashboard editor. Choose
+   **Single direction** or **Bidirectional** and select destination next-arrival sensors.
+   Do not select countdown sensors. The card has a visual configuration form.
+4. For bidirectional mode, select the left and right destination groups and optional
+   headings. These are display groups chosen by you; the feed does not supply physical
+   platform numbers. Choose a larger width if long destination names wrap.
+
+Single direction (replace the example ID using your entity picker):
 
 ```yaml
-type: markdown
-title: PATH departures
-content: |-
-  {% set board = 'sensor.replace_with_your_arrival_entity' %}
-  {% if states(board) in ['unknown', 'unavailable'] %}
-  No current arrival board available.
-  {% else %}
-  {% for train in state_attr(board, 'arrivals') or [] %}
-  - **{{ train.target }}** — {{ train.arrival_time_message }}
-  {% endfor %}
-  {% endif %}
+type: custom:path-rail-arrivals-card
+mode: single
+title: PATH — World Trade Center
+entities:
+  - sensor.replace_with_your_wtc_next_arrival
+max_rows: 2
+show_alerts: true
 ```
 
-To automate a line disruption, use a **State** trigger on that line's service-status
-sensor, entering `delayed` or `suspended` as the target state. Add your own notification
-action in the automation editor. Do not use a trigger that treats unavailable as Good Service.
-The integration defines no custom actions or event types; standard entity automations apply.
+Bidirectional:
+
+```yaml
+type: custom:path-rail-arrivals-card
+mode: bidirectional
+title: PATH Journal Square
+left_title: World Trade Center / 33rd Street
+left_entities:
+  - sensor.replace_with_your_wtc_next_arrival
+  - sensor.replace_with_your_33rd_street_next_arrival
+right_title: Newark
+right_entities:
+  - sensor.replace_with_your_newark_next_arrival
+max_rows: 2
+show_alerts: true
+```
+
+With one destination selected, rows show successive predictions in source order. With
+several destinations on a side, the card shows each destination's first prediction before
+its later predictions, following your selection order. It does not invent train IDs or
+sort delayed trains using unreliable raw seconds. Tap a row to open entity details.
+Unavailable entities never render retained old train predictions. Unknown/missing colors
+use a neutral dot; a multi-color prediction uses a split-color dot.
+
+The ticker automatically finds PATH service and accessibility alert sensors. Active
+station-tagged notices, notices mentioning a line that serves the station, and unscoped
+PATH notices are included. `related_stations` is derived from station tags and normal
+routes mentioned in the message, not an authoritative impact list. Unscoped notices
+are included conservatively; they are not proof the source declared a system-wide incident.
+Closed updates are excluded and duplicate incidents appear once. Planned notices are
+not treated as active disruptions. Failed/missing alert sources show an explicit message,
+never an all-clear. The eight-hour source window can omit older unresolved incidents.
+
+Station is detected from the selected arrival sensors. Select one station per card or
+set the **Station for alerts** option explicitly. **Alert sensors** is optional; leave it
+empty for automatic discovery. Scrolling pauses on hover or keyboard focus, and reduced
+motion settings show wrapped static text. The footer clock is browser-local wall time;
+arrival countdowns remain 30-second feed snapshots. Update the copied JavaScript and
+resource version after updating the card; HACS does not update your `/config/www` copy.
+
+For automations, use the destination delay binary sensor, or a State trigger on a line
+status with `delayed` or `suspended`. The integration defines no custom actions/events.
 
 ## Updates and removal
 

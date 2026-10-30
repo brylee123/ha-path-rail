@@ -33,6 +33,12 @@
       },
       "line_status": {
         "default": "mdi:train"
+      },
+      "destination_arrivals": {
+        "default": "mdi:train"
+      },
+      "destination_countdown": {
+        "default": "mdi:timer-outline"
       }
     },
     "binary_sensor": {
@@ -43,6 +49,9 @@
         "default": "mdi:train-car-clock"
       },
       "reported_delay": {
+        "default": "mdi:train-car-clock"
+      },
+      "destination_reported_delay": {
         "default": "mdi:train-car-clock"
       }
     }

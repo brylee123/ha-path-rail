@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, STATIONS
 from .coordinator import PathConfigEntry, PathCoordinator
 from .entity import PathBoardEntity, async_track_boards
 from .service_sensor import create_service_sensors
@@ -27,6 +27,17 @@ async def async_setup_entry(
             coordinator,
             async_add_entities,
             lambda key: [
+                PathArrivalSensor(coordinator, key, destination=True),
+                PathCountdownSensor(coordinator, key, destination=True),
+            ],
+            destination=True,
+        )
+    )
+    entry.async_on_unload(
+        async_track_boards(
+            coordinator,
+            async_add_entities,
+            lambda key: [
                 PathArrivalSensor(coordinator, key),
                 PathCountdownSensor(coordinator, key),
             ],
@@ -39,8 +50,10 @@ class PathArrivalSensor(PathBoardEntity, SensorEntity):
 
     _unrecorded_attributes = frozenset({"arrivals", "fetched_at"})
 
-    def __init__(self, coordinator: PathCoordinator, key: tuple[str, str]) -> None:
-        super().__init__(coordinator, key, "arrivals")
+    def __init__(
+        self, coordinator: PathCoordinator, key: tuple[str, str], *, destination: bool = False
+    ) -> None:
+        super().__init__(coordinator, key, "arrivals", destination=destination)
 
     @property
     def native_value(self) -> str | None:
@@ -48,13 +61,27 @@ class PathArrivalSensor(PathBoardEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {
+        board = self.board
+        first = board.arrivals[0] if board and board.arrivals else None
+        attributes = {
             "station_code": self.key[0],
-            "direction": self.key[1],
+            "station_name": STATIONS.get(self.key[0], self.key[0]),
             "arrivals": [item.as_dict() for item in self.board.arrivals] if self.board else [],
             "arrival_count": len(self.board.arrivals) if self.board else None,
             "fetched_at": self.coordinator.data.fetched_at.isoformat(),
+            "color": first.colors[0] if first and len(first.colors) == 1 else None,
+            "colors": list(first.colors) if first else [],
+            "board_type": "destination" if self.destination else "direction",
         }
+        if self.destination:
+            attributes.update(
+                destination_code=self.key[1],
+                destination=board.name if board else self.key[1],
+                source_directions=list(board.source_directions) if board else [],
+            )
+        else:
+            attributes["direction"] = self.key[1]
+        return attributes
 
 
 class PathCountdownSensor(PathBoardEntity, SensorEntity):
@@ -65,8 +92,10 @@ class PathCountdownSensor(PathBoardEntity, SensorEntity):
     _attr_suggested_unit_of_measurement = UnitOfTime.MINUTES
     _attr_suggested_display_precision = 1
 
-    def __init__(self, coordinator: PathCoordinator, key: tuple[str, str]) -> None:
-        super().__init__(coordinator, key, "countdown")
+    def __init__(
+        self, coordinator: PathCoordinator, key: tuple[str, str], *, destination: bool = False
+    ) -> None:
+        super().__init__(coordinator, key, "countdown", destination=destination)
 
     @property
     def native_value(self) -> int | None:

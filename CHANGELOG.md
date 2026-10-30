@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0 (development preview)
+
+- Add destination-specific arrival, countdown and reported-delay entities with dynamic support for unusual service destinations.
+- Expose validated per-prediction colors, including multi-color services.
+- Add an optional arrival-board card with single-direction and bidirectional layouts, a visual configuration form and a station/service alert ticker.
+- Preserve existing direction entity identities; new installations use destination entities by default.
+- Clarify that prediction freshness and the fixed polling interval are separate settings.
+
 ## 1.3.2
 
 - Add US regional metadata for HACS catalog submission.

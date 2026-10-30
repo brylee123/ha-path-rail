@@ -11,7 +11,7 @@
         },
         "data_description": {
           "stations": "Choose stations to monitor. All use a single shared request every 30 seconds.",
-          "stale_after": "Hide predictions whose source timestamps are older than this limit (120\u20131800 seconds)."
+          "stale_after": "Maximum age of each prediction's source timestamp. This does not change the fixed 30-second polling interval (120–1800 seconds)."
         }
       }
     },
@@ -36,7 +36,7 @@
         },
         "data_description": {
           "stations": "Choose stations to monitor. All use a single shared request every 30 seconds.",
-          "stale_after": "Hide predictions whose source timestamps are older than this limit (120\u20131800 seconds)."
+          "stale_after": "Maximum age of each prediction's source timestamp. This does not change the fixed 30-second polling interval (120–1800 seconds)."
         }
       }
     },
@@ -96,6 +96,12 @@
           "good_service": "Good Service",
           "not_scheduled": "Not Scheduled"
         }
+      },
+      "destination_arrivals": {
+        "name": "{destination} next arrival"
+      },
+      "destination_countdown": {
+        "name": "{destination} next arrival countdown"
       }
     },
     "binary_sensor": {
@@ -107,6 +113,9 @@
       },
       "reported_delay": {
         "name": "{direction} reported delay"
+      },
+      "destination_reported_delay": {
+        "name": "{destination} reported delay"
       }
     }
   }

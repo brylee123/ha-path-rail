@@ -11,7 +11,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DIRECTIONS, DOMAIN, STATIONS
 from .coordinator import PathCoordinator
-from .models import Board
+from .models import Board, DestinationBoard
 
 
 @callback
@@ -19,6 +19,8 @@ def async_track_boards(
     coordinator: PathCoordinator,
     async_add_entities: AddEntitiesCallback,
     factory: Callable[[tuple[str, str]], list[Entity]],
+    *,
+    destination: bool = False,
 ) -> Callable[[], None]:
     """Discover new direction boards on later polls as service changes."""
     known: set[tuple[str, str]] = set()
@@ -26,7 +28,8 @@ def async_track_boards(
     @callback
     def discover() -> None:
         entities = []
-        for key in coordinator.data.boards:
+        boards = coordinator.data.destination_boards if destination else coordinator.data.boards
+        for key in boards:
             if key[0] in coordinator.stations and key not in known:
                 known.add(key)
                 entities.extend(factory(key))
@@ -43,15 +46,31 @@ class PathBoardEntity(CoordinatorEntity[PathCoordinator]):
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: PathCoordinator, key: tuple[str, str], kind: str) -> None:
+    def __init__(
+        self,
+        coordinator: PathCoordinator,
+        key: tuple[str, str],
+        kind: str,
+        *,
+        destination: bool = False,
+    ) -> None:
         super().__init__(coordinator)
         self.key = key
+        self.destination = destination
+        self._last_destination_board = None
         station, direction = key
-        self._attr_unique_id = f"{station}_{direction}_{kind}"
-        self._attr_translation_key = (
-            f"{kind}_{direction.lower()}" if direction in DIRECTIONS else kind
-        )
-        self._attr_translation_placeholders = {"direction": direction}
+        self._attr_entity_registry_enabled_default = destination
+        if destination:
+            self._last_destination_board = coordinator.data.destination_boards[key]
+            self._attr_unique_id = f"destination_{station}_{direction}_{kind}"
+            self._attr_translation_key = f"destination_{kind}"
+            self._attr_translation_placeholders = {"destination": self._last_destination_board.name}
+        else:
+            self._attr_unique_id = f"{station}_{direction}_{kind}"
+            self._attr_translation_key = (
+                f"{kind}_{direction.lower()}" if direction in DIRECTIONS else kind
+            )
+            self._attr_translation_placeholders = {"direction": direction}
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, station)},
             name=f"PATH {STATIONS.get(station, station)}",
@@ -61,7 +80,28 @@ class PathBoardEntity(CoordinatorEntity[PathCoordinator]):
         )
 
     @property
-    def board(self) -> Board | None:
+    def board(self) -> Board | DestinationBoard | None:
+        if self.destination:
+            data = self.coordinator.data
+            board = data.destination_boards.get(self.key)
+            if board is not None:
+                self._last_destination_board = board
+                return board
+            # A rare service destination can disappear from a healthy response.
+            # Keep its entity, but never reuse a previous train or countdown.
+            if previous := self._last_destination_board:
+                return DestinationBoard(
+                    previous.station,
+                    previous.target,
+                    previous.name,
+                    (),
+                    previous.source_directions,
+                    any(
+                        (previous.station, direction) in data.boards
+                        for direction in previous.source_directions
+                    ),
+                )
+            return None
         return self.coordinator.data.boards.get(self.key)
 
     @property
