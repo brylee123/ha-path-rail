@@ -4,8 +4,8 @@
 
 # PATH Rail for Home Assistant
 
-**Development preview: 1.5.0b0.** Adds consolidated line devices, shorter sensor names and IDs,
-and source-health diagnostics. The latest published stable release remains 1.4.0.
+**Version 1.5.0** adds consolidated line devices, shorter sensor names and IDs,
+and source-health diagnostics.
 The companion [PATH Rail Arrivals Card](https://github.com/brylee123/path-rail-arrivals-card)
 continues to work; update its sensor references after an entity-ID rename.
 
@@ -78,11 +78,7 @@ as an integration. Manual installation below remains available.
 
 ### Manual installation on Home Assistant OS
 
-For the development version, use the supplied `path_rail-1.5.0b0.zip` preview or download
-the [main branch source archive](https://github.com/brylee123/ha-path-rail/archive/refs/heads/main.zip).
-The published release link below continues to provide stable 1.4.0 until a new release is made.
-
-1. Make a backup and download `path_rail-1.4.0.zip` from the
+1. Make a backup and download `path_rail-1.5.0.zip` from the
    [latest release](https://github.com/brylee123/ha-path-rail/releases/latest).
 2. Extract the ZIP on your computer. With the **Samba share** or **Studio Code Server**
    app, copy its `custom_components/path_rail` directory into `/config/custom_components/`.

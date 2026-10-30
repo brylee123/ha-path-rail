@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.5.0 (development preview)
+## 1.5.0
 
 - Consolidate line-status sensors under PATH Line Status and diagnostics under PATH Service.
 - Shorten line, destination and combined-direction names and migrate automatically assigned entity IDs while retaining custom IDs.
