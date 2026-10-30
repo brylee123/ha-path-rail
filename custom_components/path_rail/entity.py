@@ -9,7 +9,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DIRECTIONS, DOMAIN, STATIONS
+from .const import DIRECTIONS, DOMAIN, STATION_LABELS, STATIONS
 from .coordinator import PathCoordinator
 from .models import Board, DestinationBoard
 
@@ -64,7 +64,9 @@ class PathBoardEntity(CoordinatorEntity[PathCoordinator]):
             self._last_destination_board = coordinator.data.destination_boards[key]
             self._attr_unique_id = f"destination_{station}_{direction}_{kind}"
             self._attr_translation_key = f"destination_{kind}"
-            self._attr_translation_placeholders = {"destination": self._last_destination_board.name}
+            self._attr_translation_placeholders = {
+                "destination": STATION_LABELS.get(direction, direction)
+            }
         else:
             self._attr_unique_id = f"{station}_{direction}_{kind}"
             self._attr_translation_key = (

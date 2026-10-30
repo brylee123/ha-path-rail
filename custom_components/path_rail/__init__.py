@@ -8,6 +8,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import PathApi
 from .coordinator import PathConfigEntry, PathCoordinator
+from .registry import async_finish_registry, async_prepare_registry
 from .service_api import ServiceApi
 from .service_coordinator import ServiceCoordinator
 
@@ -30,7 +31,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: PathConfigEntry) -> bool
     # entities still subscribe and recover through their independent coordinator.
     await asyncio.gather(*(source.async_refresh() for source in coordinator.services.values()))
     entry.runtime_data = coordinator
+    rename_candidates = async_prepare_registry(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    async_finish_registry(hass, rename_candidates)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
 

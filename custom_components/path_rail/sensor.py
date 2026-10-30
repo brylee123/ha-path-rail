@@ -6,6 +6,7 @@ from typing import Any
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -13,6 +14,7 @@ from .const import DOMAIN, STATIONS
 from .coordinator import PathConfigEntry, PathCoordinator
 from .entity import PathBoardEntity, async_track_boards
 from .service_sensor import create_service_sensors
+from .source_health import create_source_health_sensors
 
 PARALLEL_UPDATES = 0
 
@@ -21,7 +23,13 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: PathConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     coordinator = entry.runtime_data
-    async_add_entities([PathFeedStatus(coordinator), *create_service_sensors(coordinator)])
+    async_add_entities(
+        [
+            PathFeedStatus(coordinator),
+            *create_service_sensors(coordinator),
+            *create_source_health_sensors(coordinator),
+        ]
+    )
     entry.async_on_unload(
         async_track_boards(
             coordinator,
@@ -110,11 +118,18 @@ class PathFeedStatus(CoordinatorEntity[PathCoordinator], SensorEntity):
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = ["ok", "stale", "missing_station", "empty", "error"]
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _unrecorded_attributes = frozenset({"last_successful_fetch"})
+    _unrecorded_attributes = frozenset(
+        {"last_successful_fetch", "oldest_prediction_updated", "newest_prediction_updated"}
+    )
 
     def __init__(self, coordinator: PathCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{DOMAIN}_feed_status"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, "service_announcements")},
+            name="PATH Service",
+            entry_type=DeviceEntryType.SERVICE,
+        )
 
     @property
     def available(self) -> bool:
@@ -140,7 +155,16 @@ class PathFeedStatus(CoordinatorEntity[PathCoordinator], SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
+        timestamps = [
+            item.updated
+            for key, board in self.coordinator.data.boards.items()
+            if key[0] in self.coordinator.stations
+            for item in board.arrivals
+            if item.updated is not None
+        ]
         return {
+            "oldest_prediction_updated": min(timestamps).isoformat() if timestamps else None,
+            "newest_prediction_updated": max(timestamps).isoformat() if timestamps else None,
             "last_successful_fetch": self.coordinator.data.fetched_at.isoformat(),
             "consecutive_failures": self.coordinator.failures,
             "poll_interval_seconds": self.coordinator.update_interval.total_seconds(),

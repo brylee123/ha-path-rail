@@ -52,25 +52,25 @@
   "entity": {
     "sensor": {
       "arrivals_tony": {
-        "name": "Toward New York next arrival"
+        "name": "NY Bound next arrival"
       },
       "arrivals_tonj": {
-        "name": "Toward New Jersey next arrival"
+        "name": "NJ Bound next arrival"
       },
       "arrivals": {
         "name": "{direction} next arrival"
       },
       "countdown_tony": {
-        "name": "Toward New York next arrival countdown"
+        "name": "NY Bound countdown"
       },
       "countdown_tonj": {
-        "name": "Toward New Jersey next arrival countdown"
+        "name": "NJ Bound countdown"
       },
       "countdown": {
-        "name": "{direction} next arrival countdown"
+        "name": "{direction} countdown"
       },
       "feed_status": {
-        "name": "PATH Rail feed status",
+        "name": "Arrivals feed status",
         "state": {
           "ok": "OK",
           "stale": "Stale",
@@ -89,7 +89,7 @@
         "name": "Planned service changes"
       },
       "line_status": {
-        "name": "Service status",
+        "name": "{line}",
         "state": {
           "delayed": "Delayed",
           "suspended": "Suspended",
@@ -101,15 +101,48 @@
         "name": "{destination} next arrival"
       },
       "destination_countdown": {
-        "name": "{destination} next arrival countdown"
+        "name": "{destination} countdown"
+      },
+      "arrivals_last_successful_fetch": {
+        "name": "Arrivals last successful fetch"
+      },
+      "alerts_last_successful_fetch": {
+        "name": "Alerts last successful fetch"
+      },
+      "alerts_source_status": {
+        "name": "Alerts source status",
+        "state": {
+          "ok": "OK",
+          "error": "Error"
+        }
+      },
+      "planned_last_successful_fetch": {
+        "name": "Planned changes last successful fetch"
+      },
+      "planned_source_status": {
+        "name": "Planned changes source status",
+        "state": {
+          "ok": "OK",
+          "error": "Error"
+        }
+      },
+      "site_last_successful_fetch": {
+        "name": "Timetable last successful fetch"
+      },
+      "site_source_status": {
+        "name": "Timetable source status",
+        "state": {
+          "ok": "OK",
+          "error": "Error"
+        }
       }
     },
     "binary_sensor": {
       "reported_delay_tony": {
-        "name": "Toward New York reported delay"
+        "name": "NY Bound reported delay"
       },
       "reported_delay_tonj": {
-        "name": "Toward New Jersey reported delay"
+        "name": "NJ Bound reported delay"
       },
       "reported_delay": {
         "name": "{direction} reported delay"

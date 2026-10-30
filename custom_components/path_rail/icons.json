@@ -39,6 +39,27 @@
       },
       "destination_countdown": {
         "default": "mdi:timer-outline"
+      },
+      "arrivals_last_successful_fetch": {
+        "default": "mdi:clock-check-outline"
+      },
+      "alerts_last_successful_fetch": {
+        "default": "mdi:clock-check-outline"
+      },
+      "alerts_source_status": {
+        "default": "mdi:cloud-check-outline"
+      },
+      "planned_last_successful_fetch": {
+        "default": "mdi:clock-check-outline"
+      },
+      "planned_source_status": {
+        "default": "mdi:cloud-check-outline"
+      },
+      "site_last_successful_fetch": {
+        "default": "mdi:clock-check-outline"
+      },
+      "site_source_status": {
+        "default": "mdi:cloud-check-outline"
       }
     },
     "binary_sensor": {

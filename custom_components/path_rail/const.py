@@ -23,7 +23,7 @@ STATIONS = {
     "23S": "23rd Street",
     "33S": "33rd Street",
 }
-DIRECTIONS = {"ToNY": "toward New York", "ToNJ": "toward New Jersey"}
+DIRECTIONS = {"ToNY": "NY Bound", "ToNJ": "NJ Bound"}
 
 # Normal terminal names and board directions, not an allowlist for live predictions.
 DESTINATIONS = {code: STATIONS[code] for code in ("33S", "WTC", "NWK", "HOB", "JSQ")}
@@ -49,4 +49,14 @@ LINE_STATIONS = {
     "green": ("HOB", "NEW", "EXP", "WTC"),
     "blue": ("HOB", "CHR", "09S", "14S", "23S", "33S"),
     "night-yellow": ("JSQ", "GRV", "NEW", "HOB", "CHR", "09S", "14S", "23S", "33S"),
+}
+
+# Short presentation labels; upstream identifiers and model names remain unchanged.
+STATION_LABELS = {"33S": "33", "09S": "9", "14S": "14", "23S": "23"}
+LINE_LABELS = {
+    "red": "NWK-WTC",
+    "yellow": "JSQ-33",
+    "green": "HOB-WTC",
+    "blue": "HOB-33",
+    "night-yellow": "JSQ-33 via HOB",
 }

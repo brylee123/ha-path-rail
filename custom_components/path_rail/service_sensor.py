@@ -7,7 +7,7 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, LINE_LABELS
 from .service_coordinator import ServiceCoordinator
 from .service_models import LINE_IDS, LINE_NAMES, line_status
 
@@ -80,9 +80,10 @@ class LineStatusSensor(CoordinatorEntity[ServiceCoordinator], SensorEntity):
         self.site = site
         self.line = line
         self._attr_unique_id = f"{DOMAIN}_line_{line}_status"
+        self._attr_translation_placeholders = {"line": LINE_LABELS[line]}
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, f"line_{line}")},
-            name=f"PATH {LINE_NAMES[line]}",
+            identifiers={(DOMAIN, "line_status")},
+            name="PATH Line Status",
             entry_type=DeviceEntryType.SERVICE,
         )
 
@@ -111,6 +112,7 @@ class LineStatusSensor(CoordinatorEntity[ServiceCoordinator], SensorEntity):
         scheduled = site.scheduled_lines(datetime.now(UTC)) if site else None
         return {
             "line_id": self.line,
+            "line_name": LINE_NAMES[self.line],
             "status_inferred": True,
             "status_basis": "Active incident messages plus PATH website service windows; Good Service means no identified active disruption for a scheduled line.",
             "scheduled": self.line in scheduled if scheduled is not None else None,

@@ -4,7 +4,10 @@
 
 # PATH Rail for Home Assistant
 
-**Version 1.4.0** adds destination-specific arrivals and supports the separately installable [PATH Rail Arrivals Card](https://github.com/brylee123/path-rail-arrivals-card).
+**Development preview: 1.5.0b0.** Adds consolidated line devices, shorter sensor names and IDs,
+and source-health diagnostics. The latest published stable release remains 1.4.0.
+The companion [PATH Rail Arrivals Card](https://github.com/brylee123/path-rail-arrivals-card)
+continues to work; update its sensor references after an entity-ID rename.
 
 [![Release](https://img.shields.io/github/v/release/brylee123/ha-path-rail)](https://github.com/brylee123/ha-path-rail/releases)
 [![Validation](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml/badge.svg)](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml)
@@ -75,6 +78,10 @@ as an integration. Manual installation below remains available.
 
 ### Manual installation on Home Assistant OS
 
+For the development version, use the supplied `path_rail-1.5.0b0.zip` preview or download
+the [main branch source archive](https://github.com/brylee123/ha-path-rail/archive/refs/heads/main.zip).
+The published release link below continues to provide stable 1.4.0 until a new release is made.
+
 1. Make a backup and download `path_rail-1.4.0.zip` from the
    [latest release](https://github.com/brylee123/ha-path-rail/releases/latest).
 2. Extract the ZIP on your computer. With the **Samba share** or **Studio Code Server**
@@ -131,22 +138,32 @@ The feed's destination is authoritative even if a rare service change differs fr
 
 | Entity | State and meaning |
 | --- | --- |
-| World Trade Center next arrival (example) | First matching upstream message, such as `3 min` or `Delayed`; all matching trains remain in the `arrivals` attribute |
-| World Trade Center next arrival countdown | Feed seconds for that same matching message; unknown for delayed/unsupported text or an empty destination board |
-| World Trade Center reported delay | On if any matching message explicitly says `Delayed`; off is not a guarantee of punctual service |
+| WTC next arrival (example) | First matching upstream message, such as `3 min` or `Delayed`; all matching trains remain in the `arrivals` attribute |
+| WTC countdown | Feed seconds for that same matching message; unknown for delayed/unsupported text or an empty destination board |
+| WTC reported delay | On if any matching message explicitly says `Delayed`; off is not a guarantee of punctual service |
 
 The same three entities are created for each normal destination at the selected station.
 A healthy source with no matching prediction produces unknown, not Not Scheduled.
 Missing source boards or stale matching predictions produce unavailable. Freshness is
 checked per destination, so an old WTC prediction does not hide a fresh 33rd Street train.
-Known destinations use stable canonical names; unexpected destinations use their station
-name or reported headsign. Existing unexpected destinations stay registered if they
-temporarily disappear; after a reload they are rediscovered when reported again.
+Entity names use destination codes, such as **WTC next arrival**, **33 next arrival**,
+**WTC countdown** and **WTC reported delay**. Raw `33S` is displayed as `33` in names;
+full destination names and original codes remain in attributes for cards. Unexpected
+destinations use their reported code. Previously discovered unexpected entities stay
+registered if predictions disappear; after reload they are rediscovered when reported again.
 
-Original **Toward New York/New Jersey** entities retain their unique IDs and existing
-registry settings. They are disabled by default for new entity registry entries. Existing
-dashboards can keep using them; disable them manually when migrating to destination cards.
-Arrival, countdown and delay entity IDs remain separate for direction and destination boards.
+Combined **NY Bound** and **NJ Bound** arrival/countdown/delay sensors remain available,
+disabled by default for new registry entries. Enable them from the station device if needed.
+They combine destinations within the upstream direction board and preserve source order;
+they do not identify physical platforms. Existing enabled entities retain their settings.
+Both board types use the same shared network request.
+
+On upgrade, automatically assigned destination, line and direction entity IDs are regenerated
+using shorter names. Examples: `sensor.path_journal_square_wtc_next_arrival` and
+`sensor.path_line_status_hob_wtc`. Existing custom names or custom entity IDs are preserved.
+Unique IDs remain stable and duplicate replacement sensors are not created.
+**Update dashboard cards, templates and automations that reference renamed IDs.** Entity-ID
+changes can also affect historical views; make a backup before upgrading.
 
 The next-arrival sensor exposes `destination_code`, `destination`, `station_code`,
 `station_name`, `source_directions`, `arrivals`, `arrival_count`, `color`, `colors`
@@ -160,14 +177,26 @@ The integration also creates these entities regardless of the selected arrival s
 
 | Entity | State and attributes |
 | --- | --- |
-| Feed status (diagnostic) | `ok`, `stale`, `missing_station`, `empty`, `error`; source health and failure details |
+| Arrivals feed status (diagnostic, under PATH Service) | `ok`, `stale`, `missing_station`, `empty`, `error`; source health and failure details |
 | Alerts | Count of latest incident updates, including resolved records; `announcements` and `active_count` |
 | Elevator and escalator alerts | Count of categorized accessibility notices, including resolved records; source/station tags |
 | Planned service changes | Count of published notices; titles, plain-text descriptions and HTTP(S) links |
-| Five line service-status sensors | Inferred enum status, attached notices, schedule context and source fetch times |
+| Five line service-status sensors (under PATH Line Status) | Inferred enum status, attached notices, schedule context and source fetch times |
+| Alerts / planned changes / timetable source status | Diagnostic `ok` or `error`; last successful fetch, consecutive failures and polling interval |
+| Four last-successful-fetch sensors | Diagnostic timestamps for arrivals, alerts, planned changes and timetable; retained through failures, unknown before first success |
 
-The five lines are **Newark–WTC**, **Journal Square–33rd Street**, **Hoboken–WTC**,
-**Hoboken–33rd Street**, and **Journal Square–33rd Street via Hoboken** (overnight service).
+The single **PATH Line Status** device contains **NWK-WTC**, **JSQ-33**, **HOB-WTC**,
+**HOB-33** and **JSQ-33 via HOB** (overnight service). Upgrades move existing sensors
+and clean up empty former line devices. Review device-based automations targeting those
+old devices. Per-device names, areas and other settings from five devices cannot all
+describe the new shared device; entity-specific customizations are retained.
+
+**PATH Service** contains alerts, planned changes and all source-health diagnostics.
+Arrival feed status exposes the oldest and newest selected prediction timestamps.
+A recent download may contain stale predictions: compare download and prediction times.
+An announcement's publication time does not determine source health; an old notice can
+still be active. A failure does not hide diagnostics or disable unrelated working sources.
+These diagnostics add no network requests.
 
 | Display label | Native state for automations |
 | --- | --- |
@@ -176,10 +205,10 @@ The five lines are **Newark–WTC**, **Journal Square–33rd Street**, **Hoboken
 | Good Service | `good_service` |
 | Not Scheduled | `not_scheduled` |
 
-Normal destination boards create 18 enabled entities with Journal Square selected,
-or 117 when all stations are selected (including the nine service/diagnostic entities).
-Additional unexpected destinations create additional entities when reported. Legacy
-direction entities are separate and may remain enabled on upgrades.
+Normal destination boards create 25 enabled entities with Journal Square selected,
+or 124 with all stations selected (including 16 line/service/diagnostic entities).
+Unexpected destinations add entities when reported. Combined direction entities are
+registered separately and start disabled.
 
 ## Dashboard and automations
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0 (development preview)
+
+- Consolidate line-status sensors under PATH Line Status and diagnostics under PATH Service.
+- Shorten line, destination and combined-direction names and migrate automatically assigned entity IDs while retaining custom IDs.
+- Add independent source-status and last-successful-fetch diagnostics that remain readable through outages.
+- Expose oldest and newest arrival prediction update times separately from download time.
+- Keep combined NY Bound / NJ Bound boards available but disabled by default.
+
 ## 1.4.0
 
 - Add destination-specific arrival, countdown and reported-delay entities with dynamic support for unusual service destinations.
