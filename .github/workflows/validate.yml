@@ -19,7 +19,6 @@ jobs:
       - run: python -m pip install ruff
       - run: ruff check .
       - run: ruff format --check .
-      - run: node --check custom_components/path_rail/www/path-rail-arrivals-card.js
   hassfest:
     runs-on: ubuntu-latest
     steps:

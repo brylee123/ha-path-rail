@@ -4,7 +4,7 @@
 
 # PATH Rail for Home Assistant
 
-**Development version: 1.4.0b0 on `main`.** Destination boards and the optional dashboard card are merged into the development code. The latest published stable release remains 1.3.2; installing that release does not include these features.
+**Version 1.4.0** adds destination-specific arrivals and supports the separately installable [PATH Rail Arrivals Card](https://github.com/brylee123/path-rail-arrivals-card).
 
 [![Release](https://img.shields.io/github/v/release/brylee123/ha-path-rail)](https://github.com/brylee123/ha-path-rail/releases)
 [![Validation](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml/badge.svg)](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml)
@@ -75,10 +75,8 @@ as an integration. Manual installation below remains available.
 
 ### Manual installation on Home Assistant OS
 
-1. Make a backup. For the published stable version, download the installation ZIP from the
-   [releases page](https://github.com/brylee123/ha-path-rail/releases). To test the destination
-   boards and card before their release, use the supplied `path_rail-1.4.0b0.zip` preview or
-   [download the main branch source](https://github.com/brylee123/ha-path-rail/archive/refs/heads/main.zip).
+1. Make a backup and download `path_rail-1.4.0.zip` from the
+   [latest release](https://github.com/brylee123/ha-path-rail/releases/latest).
 2. Extract the ZIP on your computer. With the **Samba share** or **Studio Code Server**
    app, copy its `custom_components/path_rail` directory into `/config/custom_components/`.
 3. Confirm the final path is `/config/custom_components/path_rail/manifest.json`.
@@ -185,100 +183,34 @@ direction entities are separate and may remain enabled on upgrades.
 
 ## Dashboard and automations
 
-Standard Entities/Tile cards can display the destination sensors. Home Assistant has
-no generic sensor setting that automatically paints those cards using a `color` attribute.
-For colored train rows and the alert ticker, install the optional bundled card:
+Standard Entities/Tile cards can display destination sensors. For station-style colored
+rows, single-direction or bidirectional layouts, automatic/light/dark appearance, and a
+station alert ticker, install the separate
+[PATH Rail Arrivals Card](https://github.com/brylee123/path-rail-arrivals-card).
 
-1. Copy `custom_components/path_rail/www/path-rail-arrivals-card.js` to
-   `/config/www/path-rail-arrivals-card.js`. Create `/config/www` if needed. The preview
-   download also supplies the JavaScript as a separate file for this step.
-2. In **Settings → Dashboards → Resources** (enable Advanced mode in your profile if
-   needed), add `/local/path-rail-arrivals-card.js?v=1.4.0b0` as a **JavaScript module**.
-   If the `www` folder is newly created, restart Home Assistant; then refresh the browser.
-3. Add the **PATH arrival board** community card in the dashboard editor. Choose
-   **Single direction** or **Bidirectional** and select destination next-arrival sensors.
-   Do not select countdown sensors. The card has a visual configuration form.
-   **Appearance** offers **Follow Home Assistant** (default), **Light**, and **Dark**.
-   Automatic mode follows Home Assistant theme changes; explicit modes affect only this card.
-   Feed-provided train colors are preserved in every mode.
-4. For bidirectional mode, select the left and right destination groups and optional
-   headings. These are display groups chosen by you; the feed does not supply physical
-   platform numbers. Choose a larger width if long destination names wrap.
+1. Add `https://github.com/brylee123/path-rail-arrivals-card` in **HACS > Custom repositories**
+   with type **Dashboard**, then download the card.
+2. Refresh the browser. Check that the JavaScript module resource is
+   `/hacsfiles/path-rail-arrivals-card/path-rail-arrivals-card.js`; add it once if needed.
+3. Add **PATH arrival board** in the dashboard editor and select destination next-arrival
+   sensors, a layout and appearance. Do not select countdown sensors.
 
-Single direction (replace the example ID using your entity picker):
+The card has independent releases and updates; installing this integration does not install
+it automatically. Manual JavaScript installation, complete options and examples are in the
+[card README](https://github.com/brylee123/path-rail-arrivals-card#installation-with-hacs).
+Neither repository is currently in the HACS default catalog.
 
-```yaml
-type: custom:path-rail-arrivals-card
-mode: single
-color_mode: auto
-title: PATH — World Trade Center
-entities:
-  - sensor.replace_with_your_wtc_next_arrival
-max_rows: 2
-show_alerts: true
-```
+If you tried the bundled development preview, remove the old
+`/local/path-rail-arrivals-card.js?...` resource before using the HACS resource. Load one
+copy, then hard-refresh the browser. Existing card configurations retain their custom-card type.
 
-Bidirectional:
-
-```yaml
-type: custom:path-rail-arrivals-card
-mode: bidirectional
-color_mode: dark
-title: PATH Journal Square
-left_title: World Trade Center / 33rd Street
-left_entities:
-  - sensor.replace_with_your_wtc_next_arrival
-  - sensor.replace_with_your_33rd_street_next_arrival
-right_title: Newark
-right_entities:
-  - sensor.replace_with_your_newark_next_arrival
-max_rows: 2
-show_alerts: true
-```
-
-With one destination selected, rows show successive predictions in source order. With
-several destinations on a side, the card shows each destination's first prediction before
-its later predictions, following your selection order. It does not invent train IDs or
-sort delayed trains using unreliable raw seconds. Tap a row to open entity details.
-Unavailable entities never render retained old train predictions. Unknown/missing colors
-use a neutral dot; a multi-color prediction uses a split-color dot.
-
-The ticker automatically finds PATH service and accessibility alert sensors. Active
-station-tagged notices, notices mentioning a line that serves the station, and unscoped
-PATH notices are included. `related_stations` is derived from station tags and normal
-routes mentioned in the message, not an authoritative impact list. Unscoped notices
-are included conservatively; they are not proof the source declared a system-wide incident.
-Closed updates are excluded and duplicate incidents appear once. Planned notices are
-not treated as active disruptions. Failed/missing alert sources show an explicit message,
-never an all-clear. The eight-hour source window can omit older unresolved incidents.
-
-Station is detected from the selected arrival sensors. Select one station per card or
-set the **Station for alerts** option explicitly. **Alert sensors** is optional; leave it
-empty for automatic discovery. Scrolling pauses on hover or keyboard focus, and reduced
-motion settings show wrapped static text. The footer clock is browser-local wall time;
-arrival countdowns remain 30-second feed snapshots. Update the copied JavaScript and
-resource version after updating the card; HACS does not update your `/config/www` copy.
+The integration provides per-prediction colors and destination attributes to any custom card.
+Home Assistant has no generic sensor setting that automatically paints standard cards from a
+`color` attribute. Ticker relevance uses derived `related_stations`, not authoritative impact
+scope; unscoped PATH notices are included conservatively by the companion card.
 
 For automations, use the destination delay binary sensor, or a State trigger on a line
 status with `delayed` or `suspended`. The integration defines no custom actions/events.
-
-### Future HACS card distribution
-
-The integration and card serve different HACS repository types. The recommended next step
-is a separate public repository named `path-rail-arrivals-card`, keeping this repository
-as the integration. The card reads the integration's entities; it does not poll PATH itself.
-
-That card repository should contain `path-rail-arrivals-card.js` in its root or `dist/`,
-a README and license, and its own `hacs.json` with `filename` set to
-`path-rail-arrivals-card.js`. Run HACS validation with `category: plugin`, publish versioned
-GitHub releases containing the JavaScript file, then distribute it first as a **Dashboard**
-custom repository. Default-catalog inclusion is a separate later submission. See the
-[HACS dashboard publishing requirements](https://www.hacs.dev/docs/publish/plugin/).
-
-The card is currently bundled here for manual installation. No separate card repository
-or HACS catalog submission has been created. When moving it, keep the custom-card type
-stable, document the minimum integration version, and remove the old manual resource
-before loading the HACS-managed copy. Maintain one card source after the move.
 
 ## Updates and removal
 
