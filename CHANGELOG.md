@@ -5,6 +5,7 @@
 - Add destination-specific arrival, countdown and reported-delay entities with dynamic support for unusual service destinations.
 - Expose validated per-prediction colors, including multi-color services.
 - Add an optional arrival-board card with single-direction and bidirectional layouts, a visual configuration form and a station/service alert ticker.
+- Add automatic, light and dark appearance options to the arrival-board card.
 - Preserve existing direction entity identities; new installations use destination entities by default.
 - Clarify that prediction freshness and the fixed polling interval are separate settings.
 

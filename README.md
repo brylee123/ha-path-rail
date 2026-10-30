@@ -4,7 +4,7 @@
 
 # PATH Rail for Home Assistant
 
-**Development preview: 1.4.0b0.** This branch adds destination boards and the optional dashboard card. The current stable release does not yet contain these features.
+**Development version: 1.4.0b0 on `main`.** Destination boards and the optional dashboard card are merged into the development code. The latest published stable release remains 1.3.2; installing that release does not include these features.
 
 [![Release](https://img.shields.io/github/v/release/brylee123/ha-path-rail)](https://github.com/brylee123/ha-path-rail/releases)
 [![Validation](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml/badge.svg)](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml)
@@ -75,8 +75,10 @@ as an integration. Manual installation below remains available.
 
 ### Manual installation on Home Assistant OS
 
-1. Make a backup and download `path_rail-1.4.0b0.zip` from the development-preview download supplied with this branch. Stable releases remain on the
-   [releases page](https://github.com/brylee123/ha-path-rail/releases).
+1. Make a backup. For the published stable version, download the installation ZIP from the
+   [releases page](https://github.com/brylee123/ha-path-rail/releases). To test the destination
+   boards and card before their release, use the supplied `path_rail-1.4.0b0.zip` preview or
+   [download the main branch source](https://github.com/brylee123/ha-path-rail/archive/refs/heads/main.zip).
 2. Extract the ZIP on your computer. With the **Samba share** or **Studio Code Server**
    app, copy its `custom_components/path_rail` directory into `/config/custom_components/`.
 3. Confirm the final path is `/config/custom_components/path_rail/manifest.json`.
@@ -196,6 +198,9 @@ For colored train rows and the alert ticker, install the optional bundled card:
 3. Add the **PATH arrival board** community card in the dashboard editor. Choose
    **Single direction** or **Bidirectional** and select destination next-arrival sensors.
    Do not select countdown sensors. The card has a visual configuration form.
+   **Appearance** offers **Follow Home Assistant** (default), **Light**, and **Dark**.
+   Automatic mode follows Home Assistant theme changes; explicit modes affect only this card.
+   Feed-provided train colors are preserved in every mode.
 4. For bidirectional mode, select the left and right destination groups and optional
    headings. These are display groups chosen by you; the feed does not supply physical
    platform numbers. Choose a larger width if long destination names wrap.
@@ -205,6 +210,7 @@ Single direction (replace the example ID using your entity picker):
 ```yaml
 type: custom:path-rail-arrivals-card
 mode: single
+color_mode: auto
 title: PATH — World Trade Center
 entities:
   - sensor.replace_with_your_wtc_next_arrival
@@ -217,6 +223,7 @@ Bidirectional:
 ```yaml
 type: custom:path-rail-arrivals-card
 mode: bidirectional
+color_mode: dark
 title: PATH Journal Square
 left_title: World Trade Center / 33rd Street
 left_entities:
@@ -254,6 +261,24 @@ resource version after updating the card; HACS does not update your `/config/www
 
 For automations, use the destination delay binary sensor, or a State trigger on a line
 status with `delayed` or `suspended`. The integration defines no custom actions/events.
+
+### Future HACS card distribution
+
+The integration and card serve different HACS repository types. The recommended next step
+is a separate public repository named `path-rail-arrivals-card`, keeping this repository
+as the integration. The card reads the integration's entities; it does not poll PATH itself.
+
+That card repository should contain `path-rail-arrivals-card.js` in its root or `dist/`,
+a README and license, and its own `hacs.json` with `filename` set to
+`path-rail-arrivals-card.js`. Run HACS validation with `category: plugin`, publish versioned
+GitHub releases containing the JavaScript file, then distribute it first as a **Dashboard**
+custom repository. Default-catalog inclusion is a separate later submission. See the
+[HACS dashboard publishing requirements](https://www.hacs.dev/docs/publish/plugin/).
+
+The card is currently bundled here for manual installation. No separate card repository
+or HACS catalog submission has been created. When moving it, keep the custom-card type
+stable, document the minimum integration version, and remove the old manual resource
+before loading the HACS-managed copy. Maintain one card source after the move.
 
 ## Updates and removal
 
@@ -330,8 +355,10 @@ ruff format --check .
 ```
 
 CI checks code style and runs the required hassfest and HACS validation actions.
-The integration test suite is not included in this repository. See [CONTRIBUTING.md](CONTRIBUTING.md)
-and [CHANGELOG.md](CHANGELOG.md).
+The integration test suite is not included in this repository. See [CHANGELOG.md](CHANGELOG.md).
+Keep protocol changes in the separately published API client, translations synchronized,
+and entity unique IDs stable. Before releasing, update the manifest and changelog, wait
+for validation, then publish a matching `vX.Y.Z` GitHub release; CI attaches the installation ZIP.
 
 ## Support and licensing
 

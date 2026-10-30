@@ -16,6 +16,11 @@ class PathRailArrivalsCard extends HTMLElement {
           { value: "single", label: "Single direction" },
           { value: "bidirectional", label: "Bidirectional" },
         ], mode: "dropdown" } } },
+        { name: "color_mode", default: "auto", selector: { select: { options: [
+          { value: "auto", label: "Follow Home Assistant" },
+          { value: "light", label: "Light" },
+          { value: "dark", label: "Dark" },
+        ], mode: "dropdown" } } },
         { name: "entities", visible: { field: "mode", value: "single" }, selector: entities },
         { name: "left_title", visible: { field: "mode", value: "bidirectional" }, selector: { text: {} } },
         { name: "left_entities", visible: { field: "mode", value: "bidirectional" }, selector: entities },
@@ -28,7 +33,7 @@ class PathRailArrivalsCard extends HTMLElement {
           ([value, label]) => ({ value, label: `${label} (${value})` })
         ), mode: "dropdown" } } },
       ],
-      computeLabel: (schema) => ({ title: "Title", mode: "Board layout", entities: "Destination arrival sensors",
+      computeLabel: (schema) => ({ title: "Title", mode: "Board layout", color_mode: "Appearance", entities: "Destination arrival sensors",
         left_title: "Left heading", right_title: "Right heading", left_entities: "Left destinations",
         right_entities: "Right destinations", max_rows: "Rows per side", show_alerts: "Show alert ticker",
         alert_entities: "Alert sensors (optional)", station: "Station for alerts (optional)" })[schema.name],
@@ -43,12 +48,14 @@ class PathRailArrivalsCard extends HTMLElement {
   static getStubConfig(hass) {
     const entity = Object.keys(hass.states).find((id) =>
       hass.states[id].attributes.board_type === "destination" && Array.isArray(hass.states[id].attributes.arrivals));
-    return { mode: "single", entities: entity ? [entity] : [], max_rows: 2, show_alerts: true };
+    return { mode: "single", color_mode: "auto", entities: entity ? [entity] : [], max_rows: 2, show_alerts: true };
   }
 
   setConfig(config) {
     const mode = config.mode || "single";
     if (!["single", "bidirectional"].includes(mode)) throw new Error("Choose single or bidirectional layout.");
+    const colorMode = config.color_mode || "auto";
+    if (!["auto", "light", "dark"].includes(colorMode)) throw new Error("Choose auto, light, or dark appearance.");
     const maxRows = Number(config.max_rows ?? 2);
     if (!Number.isInteger(maxRows) || maxRows < 1 || maxRows > 10) throw new Error("Rows per side must be between 1 and 10.");
     for (const key of ["entities", "left_entities", "right_entities", "alert_entities"]) {
@@ -56,7 +63,7 @@ class PathRailArrivalsCard extends HTMLElement {
         throw new Error(`${key} must be a list of sensor entity IDs.`);
       }
     }
-    this._config = { ...config, mode, max_rows: maxRows };
+    this._config = { ...config, mode, color_mode: colorMode, max_rows: maxRows };
     this._lastStates = null;
     this._render();
   }
@@ -96,21 +103,24 @@ class PathRailArrivalsCard extends HTMLElement {
     const style = document.createElement("style");
     style.textContent = `
       :host { display:block; }
-      ha-card { display:block; overflow:hidden; background:var(--ha-card-background,var(--card-background-color,#fff)); color:var(--primary-text-color,#171b20); border-radius:var(--ha-card-border-radius,12px); }
+      ha-card { display:block; overflow:hidden; background:var(--path-background,var(--ha-card-background,var(--card-background-color,#fff))); color:var(--path-text,var(--primary-text-color,#171b20)); border-radius:var(--ha-card-border-radius,12px); }
+      ha-card[data-color-mode="light"] { --path-background:#fff; --path-text:#171b20; --path-secondary:#59636d; --path-divider:#ddd; --path-ticker:#0876aa; }
+      ha-card[data-color-mode="dark"] { --path-background:#181e26; --path-text:#edf2f7; --path-secondary:#b4c0ce; --path-divider:#35404e; --path-ticker:#075579; }
+      ha-card[data-color-mode="auto"][data-ha-dark] { --path-background:var(--ha-card-background,var(--card-background-color,#181e26)); --path-text:var(--primary-text-color,#edf2f7); --path-secondary:var(--secondary-text-color,#b4c0ce); --path-divider:var(--divider-color,#35404e); --path-ticker:#075579; }
       h2 { font-size:1rem; font-weight:600; margin:0; padding:14px 18px 8px; }
       .board { display:grid; grid-template-columns:minmax(0,1fr); }
       .board.two { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .column { min-width:0; }
-      .column + .column { border-left:1px solid var(--divider-color,#ddd); }
-      h3 { font-size:.85rem; font-weight:500; padding:4px 16px 8px; margin:0; color:var(--secondary-text-color,#59636d); }
-      .row { appearance:none; border:0; border-top:1px solid var(--divider-color,#ddd); background:none; color:inherit; width:100%; display:grid; grid-template-columns:20px minmax(0,1fr) auto; gap:12px; align-items:center; padding:16px 18px; text-align:left; font:inherit; cursor:pointer; }
+      .column + .column { border-left:1px solid var(--path-divider,var(--divider-color,#ddd)); }
+      h3 { font-size:.85rem; font-weight:500; padding:4px 16px 8px; margin:0; color:var(--path-secondary,var(--secondary-text-color,#59636d)); }
+      .row { appearance:none; border:0; border-top:1px solid var(--path-divider,var(--divider-color,#ddd)); background:none; color:inherit; width:100%; display:grid; grid-template-columns:20px minmax(0,1fr) auto; gap:12px; align-items:center; padding:16px 18px; text-align:left; font:inherit; cursor:pointer; }
       .row:focus-visible { outline:2px solid var(--primary-color,#168acc); outline-offset:-3px; }
       .dot { width:20px; height:20px; border-radius:50%; box-shadow:inset 0 0 0 1px #0002; background:#89939d; }
       .destination { font-size:clamp(1rem,2.2vw,1.55rem); line-height:1.2; overflow-wrap:anywhere; }
       .arrival { white-space:nowrap; font-size:clamp(1rem,2.2vw,1.55rem); font-variant-numeric:tabular-nums; }
-      .empty { margin:0; padding:16px 18px; color:var(--secondary-text-color,#59636d); }
+      .empty { margin:0; padding:16px 18px; color:var(--path-secondary,var(--secondary-text-color,#59636d)); }
       .status .destination,.status .arrival { font-size:.9rem; }
-      footer { background:#0876aa; color:#fff; display:flex; align-items:center; gap:12px; min-height:38px; padding:0 14px; }
+      footer { background:var(--path-ticker,#0876aa); color:#fff; display:flex; align-items:center; gap:12px; min-height:38px; padding:0 14px; }
       time { flex:none; font-size:.8rem; font-weight:600; font-variant-numeric:tabular-nums; }
       .ticker { overflow:hidden; min-width:0; flex:1; padding:8px 0; }
       .track { display:flex; width:max-content; }
@@ -225,6 +235,8 @@ class PathRailArrivalsCard extends HTMLElement {
   _render() {
     if (!this._config || !this._hass) return;
     this._build();
+    this._card.dataset.colorMode = this._config.color_mode;
+    this._card.toggleAttribute("data-ha-dark", this._hass.themes?.darkMode === true);
     const ids = this._ids();
     const alertIds = this._config.show_alerts === false ? [] : this._alertIds();
     const states = [...ids, ...alertIds].map((id) => this._hass.states[id]);
