@@ -10,6 +10,7 @@
   "config_flow": true,
   "dependencies": [
     "frontend",
+    "http",
     "lovelace"
   ],
   "documentation": "https://github.com/brylee123/ha-path-rail",

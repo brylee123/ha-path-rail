@@ -4,10 +4,12 @@ import asyncio
 
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 
 from .api import PathApi
+from .const import DOMAIN
 from .coordinator import PathConfigEntry, PathCoordinator
 from .frontend import async_register_card, async_remove_card, async_setup_static_path
 from .registry import async_finish_registry, async_prepare_registry
@@ -15,6 +17,7 @@ from .service_api import ServiceApi
 from .service_coordinator import ServiceCoordinator
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
