@@ -5,9 +5,11 @@ import asyncio
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
 
 from .api import PathApi
 from .coordinator import PathConfigEntry, PathCoordinator
+from .frontend import async_register_card, async_remove_card, async_setup_static_path
 from .registry import async_finish_registry, async_prepare_registry
 from .service_api import ServiceApi
 from .service_coordinator import ServiceCoordinator
@@ -15,8 +17,15 @@ from .service_coordinator import ServiceCoordinator
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
 
 
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Serve the bundled dashboard card from the integration package."""
+    await async_setup_static_path(hass)
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: PathConfigEntry) -> bool:
     """Validate the feed before loading platforms; let HA retry setup failures."""
+    await async_register_card(hass)
     coordinator = PathCoordinator(hass, entry, PathApi(async_get_clientsession(hass)))
     await coordinator.async_config_entry_first_refresh()
     service_api = ServiceApi(async_get_clientsession(hass))
@@ -45,6 +54,11 @@ async def _async_options_updated(hass: HomeAssistant, entry: PathConfigEntry) ->
 async def async_unload_entry(hass: HomeAssistant, entry: PathConfigEntry) -> bool:
     """Unload platforms and their polling listeners."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: PathConfigEntry) -> None:
+    """Remove the bundled card resource after deleting the single config entry."""
+    await async_remove_card(hass)
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: PathConfigEntry) -> bool:

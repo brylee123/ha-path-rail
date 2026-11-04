@@ -4,10 +4,8 @@
 
 # PATH Rail for Home Assistant
 
-**Version 1.5.0** adds consolidated line devices, shorter sensor names and IDs,
-and source-health diagnostics.
-The companion [PATH Rail Arrivals Card](https://github.com/brylee123/path-rail-arrivals-card)
-continues to work; update its sensor references after an entity-ID rename.
+**Version 1.6.0** includes the PATH Rail Arrivals Card and registers it automatically.
+One integration download supplies the sensors and dashboard card together.
 
 [![Release](https://img.shields.io/github/v/release/brylee123/ha-path-rail)](https://github.com/brylee123/ha-path-rail/releases)
 [![Validation](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml/badge.svg)](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml)
@@ -43,6 +41,7 @@ as a custom integration repository; it is not listed in the HACS default catalog
 - UI setup and options, stable entity identities, automatic board discovery, diagnostics,
   independent source availability, asynchronous requests and upstream rate-limit handling.
 - Local PATH icons for the Home Assistant integration card and logo fallback.
+- A bundled station-style arrivals card with two layouts, light/dark appearance and an alert ticker.
 
 **Line statuses are inferred, not authoritative API values.** Read the attached messages;
 Good Service is not a guarantee of punctual service. Ambiguous data produces unknown,
@@ -78,7 +77,7 @@ as an integration. Manual installation below remains available.
 
 ### Manual installation on Home Assistant OS
 
-1. Make a backup and download `path_rail-1.5.0.zip` from the
+1. Make a backup and download `path_rail-1.6.0.zip` from the
    [latest release](https://github.com/brylee123/ha-path-rail/releases/latest).
 2. Extract the ZIP on your computer. With the **Samba share** or **Studio Code Server**
    app, copy its `custom_components/path_rail` directory into `/config/custom_components/`.
@@ -208,26 +207,86 @@ registered separately and start disabled.
 
 ## Dashboard and automations
 
-Standard Entities/Tile cards can display destination sensors. For station-style colored
-rows, single-direction or bidirectional layouts, automatic/light/dark appearance, and a
-station alert ticker, install the separate
-[PATH Rail Arrivals Card](https://github.com/brylee123/path-rail-arrivals-card).
+Standard Entities/Tile cards can display destination sensors. The **PATH Rail Arrivals Card**
+is included in this integration for station-style colored rows, single-direction or
+bidirectional layouts, automatic/light/dark appearance and a station alert ticker.
 
-1. Add `https://github.com/brylee123/path-rail-arrivals-card` in **HACS > Custom repositories**
-   with type **Dashboard**, then download the card.
-2. Refresh the browser. Check that the JavaScript module resource is
-   `/hacsfiles/path-rail-arrivals-card/path-rail-arrivals-card.js`; add it once if needed.
-3. Add **PATH arrival board** in the dashboard editor and select destination next-arrival
+1. Install/update and configure **PATH Rail**, then refresh your browser.
+2. Add **PATH arrival board** in the dashboard editor and select destination next-arrival
    sensors, a layout and appearance. Do not select countdown sensors.
 
-The card has independent releases and updates; installing this integration does not install
-it automatically. Manual JavaScript installation, complete options and examples are in the
-[card README](https://github.com/brylee123/path-rail-arrivals-card#installation-with-hacs).
-Neither repository is currently in the HACS default catalog.
+No second HACS repository, JavaScript download or manual resource registration is needed.
+The card is served from `/path_rail/path-rail-arrivals-card.js?v=1.6.0` and registered
+as a JavaScript module during integration setup. The version query follows the integration
+release to refresh cached modules. The card makes no extra requests to PATH feeds.
+With YAML-managed resources, the integration loads the same module through Home Assistant's
+frontend module hook, without editing your YAML files.
 
-If you tried the bundled development preview, remove the old
-`/local/path-rail-arrivals-card.js?...` resource before using the HACS resource. Load one
-copy, then hard-refresh the browser. Existing card configurations retain their custom-card type.
+### Moving from the standalone card or development preview
+
+Update the integration and restart Home Assistant. With storage-managed resources, setup
+migrates `/hacsfiles/path-rail-arrivals-card/path-rail-arrivals-card.js` and
+`/local/path-rail-arrivals-card.js` entries (including version queries) to the bundled URL
+and removes duplicate registrations for those paths. Other resources are left alone.
+Remove the former standalone **Dashboard** repository/download from HACS so future card
+updates cannot re-add its resource. Do not remove the **PATH Rail Integration** repository.
+For YAML-managed resources, remove the old HACS/local module entries from your YAML yourself.
+Hard-refresh each browser or Companion App after switching. Existing cards keep their
+`custom:path-rail-arrivals-card` type and configuration, including the original compact layout.
+
+### Card configuration
+
+Select next-arrival sensors with an `arrivals` attribute. Replace example entity IDs below
+with the ones in your installation.
+
+```yaml
+type: custom:path-rail-arrivals-card
+mode: single
+color_mode: auto
+title: PATH Grove Street
+entities:
+  - sensor.path_grove_street_wtc_next_arrival
+  - sensor.path_grove_street_33_next_arrival
+max_rows: 2
+show_alerts: true
+```
+
+For two destination groups in one card:
+
+```yaml
+type: custom:path-rail-arrivals-card
+mode: bidirectional
+color_mode: dark
+title: PATH Journal Square
+left_title: World Trade Center / 33rd Street
+left_entities:
+  - sensor.path_journal_square_wtc_next_arrival
+  - sensor.path_journal_square_33_next_arrival
+right_title: Newark
+right_entities:
+  - sensor.path_journal_square_nwk_next_arrival
+max_rows: 2
+show_alerts: true
+```
+
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `mode` | `single` | `single` or `bidirectional` |
+| `color_mode` | `auto` | Follow Home Assistant, or force `light` / `dark` |
+| `title` | Station name | Optional card title |
+| `entities` | Empty | Next-arrival sensors for single mode |
+| `left_entities`, `right_entities` | Empty | Sensor groups for bidirectional mode |
+| `left_title`, `right_title` | Direction 1 / Direction 2 | Optional column headings |
+| `max_rows` | `2` | 1–10 rows per side |
+| `show_alerts` | `true` | Show the clock and alert ticker |
+| `alert_entities` | Automatically detected | Optional service/accessibility alert sensor IDs |
+| `station` | Detected from arrival sensors | Optional station code for alert filtering |
+
+Use one station per card, or set `station` explicitly. A single selected destination shows
+successive predictions. With several sensors, their first predictions precede later trains
+in your selection order. Groups do not assign physical platforms. Tap a row for entity details.
+Hover over or focus the ticker to pause it; reduced-motion settings show static wrapped text.
+The clock uses browser time. The card retains the integration's normal 30-second snapshots.
 
 The integration provides per-prediction colors and destination attributes to any custom card.
 Home Assistant has no generic sensor setting that automatically paints standard cards from a
@@ -250,7 +309,9 @@ before downgrading to 1.0.0 after that migration.
 
 To uninstall, remove the PATH Rail entry in **Settings → Devices & services**, remove the
 repository in HACS (or delete its component folder for a manual installation), and restart.
-Remove unused dashboard cards and automations separately.
+Deleting the entry removes its automatically managed card resource. Remove unused dashboard
+cards and automations separately. Card updates ship with integration updates; refresh browsers
+after restarting Home Assistant.
 
 ## Troubleshooting
 
@@ -263,6 +324,7 @@ Remove unused dashboard cards and automations separately.
 | Countdown is unknown for a delayed train | Intentional: raw seconds paired with `Delayed` are not a reliable ETA |
 | A line status is unknown | Alert wording or timetable inputs cannot support a safe inference |
 | Old logo remains | Replace the complete component folder, restart HA and hard-refresh the browser; brand images can be cached |
+| Custom element does not exist / old card remains | Verify the bundled module in Dashboard Resources, remove standalone HACS/local copies, and hard-refresh the browser |
 
 Open **Settings → System → Logs** for `path_rail` messages. From the integration menu,
 download diagnostics and enable debug logging when reporting a problem. Review diagnostic

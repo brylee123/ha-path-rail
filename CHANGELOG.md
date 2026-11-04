@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0
+
+- Include the PATH Rail Arrivals Card in the integration package with the original compact layout.
+- Serve the bundled module from an asynchronous static path and register it automatically during setup.
+- Migrate known standalone/local dashboard resources, remove duplicate registrations and update the module URL with the integration version.
+- Load the bundled card with YAML-managed resources without rewriting YAML configuration.
+- Document single-install setup and upgrades from the former standalone card.
+
 ## 1.5.0
 
 - Consolidate line-status sensors under PATH Line Status and diagnostics under PATH Service.

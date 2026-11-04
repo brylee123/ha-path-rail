@@ -14,6 +14,7 @@ if tag := os.environ.get("RELEASE_TAG"):
     assert tag == f"v{version}", "Release tag must match manifest version"
 assert manifest["requirements"] == ["panynj-ridepath-client==0.2.0"]
 assert not (component / "_vendor").exists()
+assert (component / "www/path-rail-arrivals-card.js").is_file()
 output = root / "dist"
 output.mkdir(exist_ok=True)
 archive = output / f"path_rail-{version}.zip"
@@ -30,6 +31,7 @@ with ZipFile(archive, "w", compression=ZIP_DEFLATED) as bundle:
         bundle.write(path, path.relative_to(root).as_posix())
 with ZipFile(archive) as bundle:
     assert bundle.testzip() is None
+    assert "custom_components/path_rail/www/path-rail-arrivals-card.js" in bundle.namelist()
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 (output / "SHA256SUMS.txt").write_text(f"{digest}  {archive.name}\n")
 print(f"Created {archive.name}, SHA256 {digest}")
