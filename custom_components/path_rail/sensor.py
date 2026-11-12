@@ -137,7 +137,7 @@ class PathFeedStatus(CoordinatorEntity[PathCoordinator], SensorEntity):
 
     @property
     def native_value(self) -> str:
-        if not self.coordinator.last_update_success:
+        if not self.coordinator.last_update_success or self.coordinator.data is None:
             return "error"
         boards = self.coordinator.data.boards
         if any(
@@ -155,9 +155,10 @@ class PathFeedStatus(CoordinatorEntity[PathCoordinator], SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
+        data = self.coordinator.data
         timestamps = [
             item.updated
-            for key, board in self.coordinator.data.boards.items()
+            for key, board in (data.boards.items() if data else ())
             if key[0] in self.coordinator.stations
             for item in board.arrivals
             if item.updated is not None
@@ -165,7 +166,7 @@ class PathFeedStatus(CoordinatorEntity[PathCoordinator], SensorEntity):
         return {
             "oldest_prediction_updated": min(timestamps).isoformat() if timestamps else None,
             "newest_prediction_updated": max(timestamps).isoformat() if timestamps else None,
-            "last_successful_fetch": self.coordinator.data.fetched_at.isoformat(),
+            "last_successful_fetch": data.fetched_at.isoformat() if data else None,
             "consecutive_failures": self.coordinator.failures,
             "poll_interval_seconds": self.coordinator.update_interval.total_seconds(),
             "stale_after_seconds": self.coordinator.stale_after,

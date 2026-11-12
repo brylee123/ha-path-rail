@@ -7,11 +7,12 @@ from .coordinator import PathConfigEntry
 
 async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: PathConfigEntry) -> dict:
     coordinator = entry.runtime_data
+    data = coordinator.data
     return {
         "settings": {**entry.data, **entry.options},
         "last_update_success": coordinator.last_update_success,
         "consecutive_failures": coordinator.failures,
-        "last_successful_fetch": coordinator.data.fetched_at.isoformat(),
+        "last_successful_fetch": data.fetched_at.isoformat() if data else None,
         "announcement_sources": {
             name: {
                 "last_update_success": source.last_update_success,
@@ -26,7 +27,7 @@ async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: PathCon
                 "direction": board.direction,
                 "arrivals": [arrival.as_dict() for arrival in board.arrivals],
             }
-            for key, board in coordinator.data.boards.items()
+            for key, board in (data.boards.items() if data else ())
             if key[0] in coordinator.stations
         ],
     }

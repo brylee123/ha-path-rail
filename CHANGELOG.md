@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Restore recent PATH line statuses after a restart when live status inputs are unavailable, with a five-minute limit and attributes that identify restored values.
+- Let line status and service diagnostics load when the arrivals feed fails during startup.
+- Update installation instructions for the HACS default catalog.
+
 ## 1.6.0
 
 - Include the PATH Rail Arrivals Card in the integration package with the original compact layout.
