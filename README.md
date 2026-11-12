@@ -4,8 +4,8 @@
 
 # PATH Rail for Home Assistant
 
-**Version 1.6.0** includes the PATH Rail Arrivals Card and registers it automatically.
-One integration download supplies the sensors and dashboard card together.
+**Version 1.6.1** restores recent line statuses after a restart if the live sources are unavailable.
+One integration download supplies the sensors and automatically registers the bundled arrivals card.
 
 [![Release](https://img.shields.io/github/v/release/brylee123/ha-path-rail)](https://github.com/brylee123/ha-path-rail/releases)
 [![Validation](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml/badge.svg)](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml)
@@ -73,7 +73,7 @@ You can also use the repository link above or install manually.
 
 ### Manual installation on Home Assistant OS
 
-1. Make a backup and download `path_rail-1.6.0.zip` from the
+1. Make a backup and download `path_rail-1.6.1.zip` from the
    [latest release](https://github.com/brylee123/ha-path-rail/releases/latest).
 2. Extract the ZIP on your computer. With the **Samba share** or **Studio Code Server**
    app, copy its `custom_components/path_rail` directory into `/config/custom_components/`.
@@ -220,7 +220,7 @@ bidirectional layouts, automatic/light/dark appearance and a station alert ticke
    sensors, a layout and appearance. Do not select countdown sensors.
 
 No second HACS repository, JavaScript download or manual resource registration is needed.
-The card is served from `/path_rail/path-rail-arrivals-card.js?v=1.6.0` and registered
+The card is served from `/path_rail/path-rail-arrivals-card.js?v=1.6.1` and registered
 as a JavaScript module during integration setup. The version query follows the integration
 release to refresh cached modules. The card makes no extra requests to PATH feeds.
 With YAML-managed resources, the integration loads the same module through Home Assistant's

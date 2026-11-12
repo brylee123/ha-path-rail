@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.6.1
 
 - Restore recent PATH line statuses after a restart when live status inputs are unavailable, with a five-minute limit and attributes that identify restored values.
 - Let line status and service diagnostics load when the arrivals feed fails during startup.
