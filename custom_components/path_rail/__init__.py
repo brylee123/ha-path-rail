@@ -27,10 +27,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: PathConfigEntry) -> bool:
-    """Validate the feed before loading platforms; let HA retry setup failures."""
+    """Load each feed independently so an outage does not block the other entities."""
     await async_register_card(hass)
     coordinator = PathCoordinator(hass, entry, PathApi(async_get_clientsession(hass)))
-    await coordinator.async_config_entry_first_refresh()
     service_api = ServiceApi(async_get_clientsession(hass))
     coordinator.services = {
         "alerts": ServiceCoordinator(hass, entry, "alerts", service_api.async_fetch_alerts, 60),
@@ -39,9 +38,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: PathConfigEntry) -> bool
         ),
         "site": ServiceCoordinator(hass, entry, "timetable", service_api.async_fetch_site, 21600),
     }
-    # An optional feed outage must not block working arrivals. Unavailable source
-    # entities still subscribe and recover through their independent coordinator.
-    await asyncio.gather(*(source.async_refresh() for source in coordinator.services.values()))
+    await asyncio.gather(
+        coordinator.async_refresh(),
+        *(source.async_refresh() for source in coordinator.services.values()),
+    )
     entry.runtime_data = coordinator
     rename_candidates = async_prepare_registry(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

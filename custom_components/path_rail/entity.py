@@ -27,8 +27,10 @@ def async_track_boards(
 
     @callback
     def discover() -> None:
+        if (data := coordinator.data) is None:
+            return
         entities = []
-        boards = coordinator.data.destination_boards if destination else coordinator.data.boards
+        boards = data.destination_boards if destination else data.boards
         for key in boards:
             if key[0] in coordinator.stations and key not in known:
                 known.add(key)

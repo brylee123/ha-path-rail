@@ -10,7 +10,7 @@ One integration download supplies the sensors and dashboard card together.
 [![Release](https://img.shields.io/github/v/release/brylee123/ha-path-rail)](https://github.com/brylee123/ha-path-rail/releases)
 [![Validation](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml/badge.svg)](https://github.com/brylee123/ha-path-rail/actions/workflows/validate.yml)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.10.4%2B-blue)](https://www.home-assistant.io/)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-blue.svg)](https://github.com/hacs/default/pull/12964)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 Destination-specific PATH train arrivals, service announcements and inferred line status in Home Assistant.
@@ -21,8 +21,7 @@ with the Port Authority of New York and New Jersey (PANYNJ).
 [![Add this repository to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=brylee123&repository=ha-path-rail&category=integration)
 [![Add PATH Rail to Home Assistant](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=path_rail)
 
-Install the integration first, then use **Add PATH Rail**. This repository can be added
-as a custom integration repository; it is not listed in the HACS default catalog.
+Install **PATH Rail** from the HACS default catalog, then use **Add PATH Rail**.
 
 ## Contents
 
@@ -45,7 +44,7 @@ as a custom integration repository; it is not listed in the HACS default catalog
 
 **Line statuses are inferred, not authoritative API values.** Read the attached messages;
 Good Service is not a guarantee of punctual service. Ambiguous data produces unknown,
-and failed required sources produce unavailable.
+and failed required sources produce unavailable after any startup fallback expires.
 
 ## Requirements
 
@@ -62,18 +61,15 @@ You do not install Python, run pip, or add host packages on Home Assistant OS.
 
 ## Installation
 
-### HACS custom repository
+### HACS
 
-1. Open **HACS → ⋮ → Custom repositories**.
-2. Add `https://github.com/brylee123/ha-path-rail` with type **Integration**.
-3. Find **PATH Rail** and download it.
-4. Restart Home Assistant when prompted.
-5. Open **Settings → Devices & services → Add integration → PATH Rail**.
-6. Select your stations and finish setup.
+1. Open **HACS**, search for **PATH Rail**, and download the integration.
+2. Restart Home Assistant when prompted.
+3. Open **Settings → Devices & services → Add integration → PATH Rail**.
+4. Select your stations and finish setup.
 
-The HACS badge above opens the custom-repository form in your own Home Assistant.
-If your installed repository manager uses different menu labels, add the same GitHub URL
-as an integration. Manual installation below remains available.
+If PATH Rail does not appear, check that HACS shows repositories for the United States.
+You can also use the repository link above or install manually.
 
 ### Manual installation on Home Assistant OS
 
@@ -192,6 +188,14 @@ A recent download may contain stale predictions: compare download and prediction
 An announcement's publication time does not determine source health; an old notice can
 still be active. A failure does not hide diagnostics or disable unrelated working sources.
 These diagnostics add no network requests.
+
+After a restart or integration reload, line status is calculated from live alerts and the
+timetable when both are available. If either source fails during setup, a saved line status
+can be shown for up to five minutes from its original alert fetch time. Check `status_restored`
+and `status_as_of` to distinguish that fallback from a live result. Automations that need live
+data should require `status_restored` to be `false`. A live result replaces the fallback, even
+when the result is unknown. After the five-minute limit, the sensor is unavailable until its
+sources recover. Arrival predictions are never restored.
 
 | Display label | Native state for automations |
 | --- | --- |
